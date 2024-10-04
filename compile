@@ -1,0 +1,42 @@
+#!/bin/bash
+
+DELTA=3000
+PYTHON=".venv/bin/python"
+
+rates=("1500kbits" "3000kbits" "4500kbits" "6000kbits" "7500kbits" "infikbits")
+
+src="dazn-service/long-play"
+for rate in "${rates[@]}"; do
+    bin="src/compiler.py"
+    "$PYTHON" "$bin" --folder="$src/$rate/" --server=dazn & #/dev/null 2>&1 &
+done
+wait
+
+src="dazn-service/long-play"
+for rate in "${rates[@]}"; do
+    bin="src/profiler.py"
+    "$PYTHON" "$bin" --folder="$src/$rate/" --server=dazn #& #/dev/null 2>&1 &
+done
+#wait
+
+src="dazn-service/long-play"
+for rate in "${rates[@]}"; do
+    bin="src/assembler.py"
+    "$PYTHON" "$bin" --folder="$src/$rate/" --server=dazn --step=1000  & #/dev/null 2>&1 &
+    "$PYTHON" "$bin" --folder="$src/$rate/" --server=dazn --step=2000  & #/dev/null 2>&1 &
+    "$PYTHON" "$bin" --folder="$src/$rate/" --server=dazn --step=10000 & #/dev/null 2>&1 &
+done
+wait
+
+# dst=/home/giorgiodaniele/Desktop/portal/dazn
+# rm -rf $dst
+# mkdir  $dst
+# for rate in "${rates[@]}"; do
+#     mkdir -p $dst/$rate
+#     for test_dir in $src/$rate/test*; do
+#         cp -r "$test_dir" "$dst/$rate"
+#     done
+#     for test_dir in $src/$rate/medias; do
+#         cp -r "$test_dir" "$dst/$rate"
+#     done
+# done

@@ -1,0 +1,82 @@
+Tstat optionally produces subsets of the fields of the "log_tcp_complete" and "log_udp_complete"  
+in "log_tcp_periodic" and "log_udp_periodic" files, respectively.
+For each TCP connection and for each UDP flow pair, the metrics reported in the below tables are 
+written in the respective log at the end of each time bin. 
+Statistics are not incremental, thus they are computed on the packets belonging to the given bin. 
+For a complete description of the fields, the definition of a TCP connection, and the definition of a UDP 
+flow pair, please refer to the "log_tcp_complete" and "log_udp_complete" description.
+
+A new time bin begins when more than 1 second elapses from the beginning of the current time bin. 
+When a new time bin begins, the current time bin ends, and the statistics are dumped in the log. 
+Notice that, as a consequence of the bin logic and the asynchronous Tstat behaviour, the new time bin 
+does not begin exactly 1 second after the beginning of the current bin, but it begins when Tstat 
+observers the first packet for the TCP connection (or UDP flow pair) after that moment.
+This as two implications: i) bins do not start exactly after N seconds from the flow first packet, 
+ii) bins are not created when no packet is received. 
+While 1 second is the default value for the duration of the time bins, the actual value is controlled 
+by the global constant C<Log_Periodic_Interval> provided via the -G command line option.
+
+LOG_TCP_PERIODIC
+---------------------
+
+This is the format for the "log_tcp_periodic" file with the sampling of the TCP connections.
+
+############################################################################
+# C2S # S2C # Short description      # Unit  # Long description            #
+############################################################################
+#  1  #  3  # Client/Server IP addr  # -     # IP addresses of the client/server
+#  2  #  4  # Client/Server TCP port # -     # TCP port addresses for the client/server
+############################################################################
+#  5        # time_abs_start         # ms    # Bin first packet absolute time (epoch)
+#  6        # time_rel_start         # ms    # Bin first packet since the first flow segment
+#  7        # time_rel_end           # ms    # Bin last packet since the first flow segment
+#  8        # bin_duration           # ms    # Bin duration
+############################################################################
+#  9  # 21  # packets                # -     # total number of packets observed form the client/server
+# 10  # 22  # RST sent               # 0/1   # 0 = no RST segment has been sent by the client/server
+# 11  # 23  # ACK sent               # -     # number of segments with the ACK field set to 1
+# 12  # 24  # PURE ACK sent          # -     # number of segments with ACK field set to 1 and no data
+# 13  # 25  # unique bytes           # bytes # number of bytes sent in the payload
+# 14  # 26  # data pkts              # -     # number of segments with payload
+# 15  # 27  # data bytes             # bytes # number of bytes transmitted in the payload, including retransmissions
+# 16  # 28  # rexmit pkts            # -     # number of retransmitted segments (including SYNs and FINs)
+# 17  # 29  # rexmit bytes           # bytes # number of retransmitted bytes
+# 18  # 30  # out seq pkts           # -     # number of segments observed out of sequence
+# 19  # 31  # SYN count              # -     # number of SYN segments observed (including rtx)
+# 20  # 32  # FIN count              # -     # number of FIN segments observed (including rtx)
+############################################################################
+# 33  # 35  # Average rtt            # ms    # Average RTT computed measuring the time elapsed between the data segment and the corresponding ACK
+# 34  # 36  # rtt count              # -     # Number of valid RTT observation
+# 37  # 39  # cwin min               # bytes # Minimum in-flight-size
+# 38  # 40  # cwin max               # bytes # Maximum in-flight-size computed as the difference between the largest sequence number so far, and the corresponding last ACK message on the reverse path. It is an estimate of the congestion window
+# 41  # 42  # SACK sent              # -     # number of SACK messages sent
+############################################################################
+# 43        # C Internal             # 0/1   # 1 = client has internal IP, 0 = client has external IP
+# 44        # S Internal             # 0/1   # 1 = server has internal IP, 0 = server has external IP
+# 45        # C anonymized           # 0/1   # 1 = client IP is CryptoPAn anonymized
+# 46        # S anonymized           # 0/1   # 1 = server IP is CryptoPAn anonymized
+############################################################################
+
+
+LOG_UDP_PERIODIC
+-------------------------
+
+This is the format of the "log_udp_periodic" file with the sampling of the UDP flow pairs.
+
+############################################################################
+# C2S # S2C # Short description      # Unit  # Long description            #
+############################################################################
+#  1  # 5   # Client/Server IP addr  # -     # IP addresses of client/server
+#  2  # 6   # Client/Server UDP port # -     # UDP port addresses of client/server
+#  3  # 7   # Internal               # 0/1   # 1 = IP address is internal
+#  4  # 8   # Anonymized             # 0/1   # 1 = IP address is CryptoPAN anonymized
+############################################################################
+#  9        # time_abs_start         # ms    # Bin first packet absolute time (epoch)
+#  10       # time_rel_start         # ms    # Bin first packet since the first flow segment
+#  11       # time_rel_end           # ms    # Bin last packet since the first flow segment
+#  12       # bin_duration           # ms    # Bin duration
+############################################################################
+#  13 # 15  # Packets                # -     # Total number of packets observed (in the time bin) from the client/server
+#  14 # 16  # Data bytes             # bytes # Number of bytes transmitted in the payload (in the time bin)
+############################################################################
+

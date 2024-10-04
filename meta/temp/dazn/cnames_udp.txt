@@ -1,0 +1,12 @@
+cname abs
+www.google.com 356
+fundingchoicesmessages.google.com 356
+safe.dazn.com 352
+expansioneggnog.com 351
+www.google.it 232
+dcj-ac-live.cdn.indazn.com 178
+pagead2.googlesyndication.com 137
+imasdk.googleapis.com 120
+www.googletagmanager.com 80
+dce-ac-live.cdn.indazn.com 7
+dcf-ak-livedazn.akamaized.net 2

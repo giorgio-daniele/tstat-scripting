@@ -1,0 +1,179 @@
+###########################################################
+# Streabot compiler
+#
+# author: [Giorgio Daniele Luppina]
+# date:   [2024-09-01]
+###########################################################
+
+binary: "tstat/tstat/tstat"
+config: "tstat/tstat-conf/runtime.conf"
+global: "tstat/tstat-conf/globals.conf"
+
+tcp_protocols:
+  0:
+    code: "unknown"
+    description: "unknown protocol"
+  1:
+    code: "http"
+    description: "http protocol"
+  2:
+    code: "rtsp"
+    description: "rtsp protocol"
+  4:
+    code: "rtp"
+    description: "rtp protocol"
+  8:
+    code: "icy"
+    description: "icy protocol"
+  16:
+    code: "rtcp"
+    description: "rtcp protocol"
+  32:
+    code: "msn"
+    description: "msn protocol"
+  64:
+    code: "ymsg"
+    description: "ymsg protocol"
+  128:
+    code: "xmpp"
+    description: "xmpp protocol"
+  256:
+    code: "p2p"
+    description: "p2p protocol"
+  512:
+    code: "skype"
+    description: "skype protocol"
+  1024:
+    code: "smtp"
+    description: "smtp protocol"
+  2048:
+    code: "pop3"
+    description: "pop3 protocol"
+  4096:
+    code: "imap4"
+    description: "imap4 protocol"
+  8192:
+    code: "tls"
+    description: "tls/tls protocol"
+  16384:
+    code: "ed2k"
+    description: "ed2k protocol (obfuscated)"
+  32768:
+    code: "ssh"
+    description: "ssh 2.0/1.99 protocol"
+  65536:
+    code: "rtmp"
+    description: "rtmp protocol"
+  131072:
+    code: "bittorrent_mse/pe"
+    description: "bittorrent mse/pe protocol"
+
+udp_protocols:
+  0:
+    code: "unknown"
+    description: "unknown (unclassified)"
+  1:
+    code: "first_rtp"
+    description: "unknown (possible unclassified rtp flow)"
+  2:
+    code: "first_rtsp"
+    description: "unknown (possible unclassified rtsp flow)"
+  3:
+    code: "rtp"
+    description: "rtp protocol"
+  4:
+    code: "rtcp"
+    description: "rtcp protocol"
+  5:
+    code: "skype_e2e"
+    description: "skype end-to-end"
+  6:
+    code: "skype_e2o"
+    description: "skypeout"
+  7:
+    code: "skype_sig"
+    description: "skype signalling"
+  8:
+    code: "p2p_ed2k"
+    description: "emule ed2k protocol"
+  9:
+    code: "p2p_kad"
+    description: "emule kad (kamdelia) protocol"
+  10:
+    code: "p2p_kadu"
+    description: "adunanza (emule mod) kad (kamdelia) protocol"
+  11:
+    code: "p2p_gnu"
+    description: "gnutella protocol [*]"
+  12:
+    code: "p2p_bt"
+    description: "bittorrent dht protocol (only)"
+  13:
+    code: "p2p_dc"
+    description: "directconnect protocol [*]"
+  14:
+    code: "p2p_kazaa"
+    description: "kazaa protocol [*]"
+  15:
+    code: "p2p_pplive"
+    description: "pplive ip-tv protocol"
+  16:
+    code: "p2p_sopcast"
+    description: "sopcast ip-tv protocol"
+  17:
+    code: "p2p_tvants"
+    description: "tv-ants iptv protocol"
+  18:
+    code: "p2p_okad"
+    description: "emule obfuscated kad protocol"
+  19:
+    code: "dns"
+    description: "dns protocol"
+  20:
+    code: "p2p_utp"
+    description: "bittorrent utp protocol (only)"
+  21:
+    code: "p2p_utpbt"
+    description: "bittorrent dht and utp protocols (mixed)"
+  22:
+    code: "udp_vod"
+    description: "mpeg2 pes streaming over udp"
+  23:
+    code: "p2p_ppstream"
+    description: "ppstream ip-tv protocol"
+  24:
+    code: "teredo"
+    description: "teredo ipv6 tunneling over udp (mostly bittorrent)"
+  25:
+    code: "udp_sip"
+    description: "sip over udp messages"
+  26:
+    code: "udp_dtls"
+    description: "dtls protocol"
+  27:
+    code: "udp_quic"
+    description: "quic protocol"
+
+platform:
+  sky:
+    channels:
+    - rai
+    - rete
+    - italia
+    - canale
+    - sport
+    - arena
+    - max
+    - tennis
+    - golf
+    - tg24
+  dazn:
+    channels:
+    - eurosport1
+    - eurosport2
+    - zondadazn
+    - nfltv
+    - milantv
+    - intertv
+    - umtb-world-series
+    - radio-tv-seriea

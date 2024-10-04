@@ -1,0 +1,2 @@
+\b(?:[a-zA-Z0-9-]+\.)*indazn\.com\b
+\b(?:[a-zA-Z0-9-]+\.)*dazn\.com\b
