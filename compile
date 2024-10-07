@@ -5,19 +5,19 @@ PYTHON=".venv/bin/python"
 
 rates=("1500kbits" "3000kbits" "4500kbits" "6000kbits" "7500kbits" "infikbits")
 
-src="dazn/long-play"
-for rate in "${rates[@]}"; do
-    bin="src/compiler.py"
-    "$PYTHON" "$bin" --folder="$src/$rate/" --server=dazn & #/dev/null 2>&1 &
-done
-wait
-
-# src="dazn-service/long-play"
+# src="dazn/long-play"
 # for rate in "${rates[@]}"; do
-#     bin="src/profiler.py"
-#     "$PYTHON" "$bin" --folder="$src/$rate/" --server=dazn #& #/dev/null 2>&1 &
+#     bin="src/compiler.py"
+#     "$PYTHON" "$bin" --folder="$src/$rate/" --server=dazn & #/dev/null 2>&1 &
 # done
-# #wait
+# wait
+
+# # src="dazn-service/long-play"
+# # for rate in "${rates[@]}"; do
+# #     bin="src/profiler.py"
+# #     "$PYTHON" "$bin" --folder="$src/$rate/" --server=dazn #& #/dev/null 2>&1 &
+# # done
+# # #wait
 
 src="dazn/long-play"
 for rate in "${rates[@]}"; do

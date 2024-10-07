@@ -41,6 +41,7 @@ def process_streaming_period(data: pandas.DataFrame,
         # extract all bins in the interval [ti; tj]
         bins = data[(data["ts"] <= tj) & (data["te"] >= ti)]
         if bins.empty:
+            records.append([ti, tj, 0, 0] + [0] * 22)
             continue
 
         # extract all http in the interval [ti; tj]
@@ -268,14 +269,14 @@ if __name__ == "__main__":
 
             if udp_per > 80:
                 metrics = process_streaming_period(data=data, meta=meta, ts=ts, te=te, path=udp_data, delta=int(step), num=udp_count)
-                metrics.to_csv(os.path.join(udp_data_path, f"sample_{step}-{udp_count}"), index=False, sep=" ")
-                metrics.to_csv(os.path.join(mix_data_path, f"sample_{step}-{mix_count}"), index=False, sep=" ")
+                metrics.to_csv(os.path.join(udp_data_path, f"sample_{udp_count}"), index=False, sep=" ")
+                metrics.to_csv(os.path.join(mix_data_path, f"sample_{mix_count}"), index=False, sep=" ")
                 udp_count +=1
                 mix_count +=1
             else:
                 metrics = process_streaming_period(data=data, meta=meta, ts=ts, te=te, path=tcp_data, delta=int(step), num=tcp_count)
-                metrics.to_csv(os.path.join(tcp_data_path, f"sample_{step}-{tcp_count}"), index=False, sep=" ")
-                metrics.to_csv(os.path.join(mix_data_path, f"sample_{step}-{mix_count}"), index=False, sep=" ")
+                metrics.to_csv(os.path.join(tcp_data_path, f"sample_{tcp_count}"), index=False, sep=" ")
+                metrics.to_csv(os.path.join(mix_data_path, f"sample_{mix_count}"), index=False, sep=" ")
                 tcp_count +=1
                 mix_count +=1
         print()
