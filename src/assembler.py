@@ -47,10 +47,12 @@ def process_streaming_period(data: pandas.DataFrame,
         http = meta[(meta["ts"] >= ti) & (meta["ts"] <= tj)]
 
         # sort values and reset the index
-        bins = bins.sort_values(by="ts").reset_index(drop=True)
+        bins = bins.sort_values(by="ts")
+        bins = bins.reset_index(drop=True)
 
         # sort values and reset the index
-        http = http.sort_values(by="ts").reset_index(drop=True)
+        http = http.sort_values(by="ts")
+        http = http.reset_index(drop=True)
 
         # extract audio and video requests
         audio = http[http["mime"].str.contains("audio/mp4")]
@@ -129,19 +131,14 @@ def process_streaming_period(data: pandas.DataFrame,
 
     # define the columns for output dataframe
     columns = [
-        "ts", "te", "nbins", "ncons",
-        "c_tcp_packs", "c_tcp_bytes",
-        "c_udp_packs", "c_udp_bytes",
-        "s_tcp_packs", "s_tcp_bytes",
-        "s_udp_packs", "s_udp_bytes",
-        "max_bins_span",  "min_bins_span",
-        "avg_bins_span",  "std_bins_span",
-        "max_video_rate", "min_video_rate",
-        "avg_video_rate", "std_video_rate",
-        "max_audio_rate", "min_audio_rate",
-        "avg_audio_rate", "std_audio_rate",
-        "video_requests",
-        "audio_requests"]
+        "ts",               "te",               "nbins",            "ncons",
+        "c_tcp_packs",      "c_tcp_bytes",      "c_udp_packs",      "c_udp_bytes",
+        "s_tcp_packs",      "s_tcp_bytes",      "s_udp_packs",      "s_udp_bytes",
+        "max_bins_span",    "min_bins_span",    "avg_bins_span",    "std_bins_span",
+        "max_video_rate",   "min_video_rate",   "avg_video_rate",   "std_video_rate",
+        "max_audio_rate",   "min_audio_rate",   "avg_audio_rate",   "std_audio_rate",
+        "video_requests",   "audio_requests"
+    ]
 
     # generate a frame
     metrics = pandas.DataFrame(records, columns=columns)
@@ -153,7 +150,8 @@ def process_streaming_period(data: pandas.DataFrame,
         metrics["te"] -= first_ts  # rescale te
 
     # save on disk
-    metrics.to_csv(os.path.join(path, f"log_stream_complete_{delta}-{num}"), index=False, sep=" ")
+    return metrics
+    #metrics.to_csv(os.path.join(path, f"log_stream_complete_{delta}-{num}"), index=False, sep=" ")
     # this is the end
 
 
@@ -185,16 +183,20 @@ if __name__ == "__main__":
         strings = [line.strip() for line in f if line.strip()]
         regexps = [re.compile(string) for string in strings]
 
-    tcp_samples = os.path.join(folder, "medias", "tcp", str(step))
-    udp_samples = os.path.join(folder, "medias", "udp", str(step))
+    tcp_data_path = os.path.join(folder, "data", "tcp", str(step))
+    udp_data_path = os.path.join(folder, "data", "udp", str(step))
+    mix_data_path = os.path.join(folder, "data", "mix", str(step))
 
-    if os.path.exists(tcp_samples):
-        shutil.rmtree(tcp_samples)
-    if os.path.exists(udp_samples):
-        shutil.rmtree(udp_samples)
+    if os.path.exists(tcp_data_path):
+        shutil.rmtree(tcp_data_path)
+    if os.path.exists(udp_data_path):
+        shutil.rmtree(udp_data_path)
+    if os.path.exists(mix_data_path):
+        shutil.rmtree(mix_data_path)
 
-    os.makedirs(tcp_samples)
-    os.makedirs(udp_samples)
+    os.makedirs(tcp_data_path)
+    os.makedirs(udp_data_path)
+    os.makedirs(mix_data_path)
 
     # load folder to be processed (e.g. test-1, test-2)
     folders = []
@@ -208,6 +210,7 @@ if __name__ == "__main__":
     # init counters
     udp_count = 0
     tcp_count = 0
+    mix_count = 0
 
     for folder in folders:
 
@@ -221,12 +224,12 @@ if __name__ == "__main__":
         # load periods
         periods = __extract_streaming_periods(os.path.join(folder, LOG_BOT_COMPLETE))
 
-        # filter multimedia flows
+        # filter multimedia flows (over TCP)
         medias_tcp = tper[tper["cname"].apply(lambda cname: matches(cname, regexps))].copy()
         # label
         medias_tcp["proto"] = Protocol.TCP
 
-        # filter multimedia flows
+        # filter multimedia flows (over UDP)
         medias_udp = uper[uper["cname"].apply(lambda cname: matches(cname, regexps))].copy()
         # label
         medias_udp["proto"] = Protocol.UDP
@@ -236,11 +239,11 @@ if __name__ == "__main__":
 
             # filter TCP bins within the period
             tcp_data = medias_tcp[(medias_tcp["ts"] <= float(te)) & (medias_tcp["te"] >= float(ts))]
-            tot_tcp = len(tcp_data["cname"])
+            tot_tcp  = len(tcp_data["cname"])
 
             # filter UDP bins within the period
             udp_data = medias_udp[(medias_udp["ts"] <= float(te)) & (medias_udp["te"] >= float(ts))]
-            tot_udp = len(udp_data["cname"])
+            tot_udp  = len(udp_data["cname"])
 
             # count how many bins are in total
             tot = tot_tcp + tot_udp
@@ -264,9 +267,17 @@ if __name__ == "__main__":
             meta = pandas.read_csv(os.path.join(folder, LOG_HAR_COMPLETE), sep="\s+")
 
             if udp_per > 80:
-                process_streaming_period(data=data, meta=meta, ts=ts, te=te, path=udp_samples, delta=int(step), num=udp_count)
+                metrics = process_streaming_period(data=data, meta=meta, ts=ts, te=te, path=udp_data, delta=int(step), num=udp_count)
+                metrics.to_csv(os.path.join(udp_data_path, f"sample_{step}-{udp_count}"), index=False, sep=" ")
+                metrics.to_csv(os.path.join(mix_data_path, f"sample_{step}-{mix_count}"), index=False, sep=" ")
+                udp_count +=1
+                mix_count +=1
             else:
-                process_streaming_period(data=data, meta=meta, ts=ts, te=te, path=tcp_samples, delta=int(step), num=tcp_count)
+                metrics = process_streaming_period(data=data, meta=meta, ts=ts, te=te, path=tcp_data, delta=int(step), num=tcp_count)
+                metrics.to_csv(os.path.join(tcp_data_path, f"sample_{step}-{tcp_count}"), index=False, sep=" ")
+                metrics.to_csv(os.path.join(mix_data_path, f"sample_{step}-{mix_count}"), index=False, sep=" ")
+                tcp_count +=1
+                mix_count +=1
         print()
         
 

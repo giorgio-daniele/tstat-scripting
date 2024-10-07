@@ -1,3 +1,5 @@
 *.pcap
 *.har
 *.csv
+.venv
+__pycache__
