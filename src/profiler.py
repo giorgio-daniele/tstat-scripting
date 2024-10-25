@@ -1,21 +1,13 @@
 import os
-import re
 import pandas
-import yaml
-import numpy
 import collections
 import argparse
 
-from lib.generic import __fetch_tests_files
 from lib.generic import __extract_streaming_periods
 
 from lib.generic import LOG_BOT_COMPLETE
-from lib.generic import LOG_HAR_COMPLETE
-from lib.generic import LOG_NET_COMPLETE
 from lib.generic import LOG_TCP_COMPLETE
 from lib.generic import LOG_UDP_COMPLETE
-from lib.generic import LOG_TCP_PERIODIC
-from lib.generic import LOG_UDP_PERIODIC
 
 def process_flows(tcom: pandas.DataFrame, ucom: pandas.DataFrame, ts: float, te: float,
                   tcp_counter: collections.Counter, 

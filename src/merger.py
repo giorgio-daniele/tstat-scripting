@@ -52,8 +52,7 @@ def merge_data(s_file: str, l_file: str):
 
 if __name__ == "__main__":
 
-    S_SAMPLING = "1000"
-    L_SAMPLING = "10000"
+    HIGH_FREQ, LOW_FREQ = "1000", "10000"
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--folder", required=True)
@@ -62,36 +61,25 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # define media folder paths
-    s_samples = os.path.join(args.folder, "media", args.protocol, S_SAMPLING)
-    l_samples = os.path.join(args.folder, "media", args.protocol, L_SAMPLING)
+    # Define media folder paths
+    high_freq_samples = os.path.join(args.folder, "media", args.protocol, HIGH_FREQ)
+    low_freq_samples  = os.path.join(args.folder, "media", args.protocol, LOW_FREQ)
 
-    # get the files
-    s_files = sorted([os.path.join(s_samples, f) for f in os.listdir(s_samples)])
-    l_files = sorted([os.path.join(l_samples, f) for f in os.listdir(l_samples)])
+    # Get the files
+    s_files = sorted([os.path.join(high_freq_samples, f) for f in os.listdir(high_freq_samples)])
+    l_files = sorted([os.path.join(low_freq_samples,  f) for f in os.listdir(low_freq_samples)])
 
     if os.path.exists(args.output):
         shutil.rmtree(args.output)
     os.mkdir(args.output)
+
     offset = 0
 
     for num, (s, l) in enumerate(zip(s_files, l_files)):
 
-        print(f"Processing folder: {args.folder}")
-        print(f"  - merging: {s} and {l}")
-        
+        print(f"[MSG]: processing {args.folder}")
+
         frame = merge_data(s_file=s, l_file=l)
         frame.to_csv(os.path.join(args.output, f"sample-{num + int(offset)}"), sep=" ", index=False)
         print(f"  - saving: {os.path.join(args.output, f'sample-{num + int(offset)}')}")
     print()
-
-
-    # for num, (f1, f2) in enumerate(zip(long_files, fast_files)):
-
-    #     print(f"Processing folder: {path}")
-    #     print(f"  - merging: {os.path.basename(f1)} and {os.path.basename(f2)}")
-
-    #     frame = merge_files(long_file=f1, fast_file=f2)
-    #     if frame.empty:
-    #         continue
-    #     frame.to_csv(os.path.join(path, f"sample-{num}"), sep=" ", index=False)

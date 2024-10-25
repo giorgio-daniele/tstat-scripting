@@ -292,34 +292,39 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # get the arguments
+    # Get the command line arguments
     folder = args.folder
     server = args.server
-    step   = args.step
+    step = args.step
 
-    # select the provider
+    # Select the provider metadata
     if server == "dazn":
-        from lib.dazn import ROOT
+        from lib.dazn import METADATA
 
-    # path of all folders
+    # Define the path of all folders
     outputs = [
         os.path.join(folder, "media", "tcp", str(step)),    #1
         os.path.join(folder, "media", "udp", str(step)),    #2
-        os.path.join(folder, "media", "mix", str(step)),    #3
+        # os.path.join(folder, "media", "mix", str(step)),    #3
 
-        os.path.join(folder, "noise", "tcp", str(step)),    #4
-        os.path.join(folder, "noise", "udp", str(step)),    #5
-        os.path.join(folder, "noise", "mix", str(step)),    #6
+        # os.path.join(folder, "noise", "tcp", str(step)),    #4
+        # os.path.join(folder, "noise", "udp", str(step)),    #5
+        # os.path.join(folder, "noise", "mix", str(step)),    #6
 
     ]
     
-    # create directory for the output
+    # Check if there is any tests folder in the provided folder
+    if not os.path.exists(os.path.join(folder, "tests")):
+        print(f"[ERR]: no [tests] folder detected in {folder}")
+        exit(1)
+
+    # Create the folders
     create_dirs(paths=outputs)
 
-    # load all compiled test from Tstat
-    folders = load_tests(folder=folder)
+    # Load regular expressions
+    regexs = load_regex_patterns(path=os.path.join(METADATA, "servers", "linear.dat"))
 
-    # init counters
+    # Init counters
     medias_over_tcp = 0
     medias_over_udp = 0
     medias_over_mix = 0
@@ -327,55 +332,50 @@ if __name__ == "__main__":
     noises_over_udp = 0
     noises_over_mix = 0
 
-    for folder in folders:
-        print(f"Processing folder: {folder}")
-        print(f"  - step: {step} ms, {float(step) / 1000} s")
+    for test in os.listdir(os.path.join(folder, "tests")):
 
-        # load regular expressions
-        path = os.path.join(ROOT, "regexs", "linear.txt")
-        regs = load_regex_patterns(path=path)
+        print(f"[MSG]: processing test {test} in folder {folder}, with step = {step}")
 
-        # load periods
-        path = os.path.join(folder, LOG_BOT_COMPLETE)
-        periods = __extract_streaming_periods(path=path)
+        # Extract the streaming periods
+        periods = __extract_streaming_periods(path=os.path.join(folder, "tests", test, LOG_BOT_COMPLETE))
 
-        # generate tcp periodic frame
-        path = os.path.join(folder, LOG_TCP_PERIODIC)
-        tper = pandas.read_csv(path, sep="\s+")
+        # Generate TCP periodic frame and assign the
+        # protocol label
+        tper = pandas.read_csv(os.path.join(folder, "tests", test, LOG_TCP_PERIODIC), sep=" ")
         tper["proto"] = Protocol.TCP
 
-        # generate udp periodic frame
-        path = os.path.join(folder, LOG_UDP_PERIODIC)
-        uper = pandas.read_csv(path, sep="\s+")
+        # Generate UDP periodic frame and assign the
+        # protocol label
+        uper = pandas.read_csv(os.path.join(folder, "tests", test, LOG_UDP_PERIODIC), sep=" ")
         uper["proto"] = Protocol.UDP
 
-        # filter all media flows over TCP
-        media_tcp_bins = tper[tper["cname"].apply(lambda cname: matches(cname, regs))]
-        # filter all noise flows over TCP
-        noise_tcp_bins = tper[~tper["cname"].apply(lambda cname: matches(cname, regs))]
+        # Select all rows associated to a linear stream over TCP
+        media_tcp_bins = tper[tper["cname"].apply(lambda cname: matches(cname, regexs))]
+        # Select all rows associated to a non linear stream over TCP
+        noise_tcp_bins = tper[~tper["cname"].apply(lambda cname: matches(cname, regexs))]
 
-        # filter all noise flows over UDP
-        media_udp_bins = uper[uper["cname"].apply(lambda cname: matches(cname, regs))]
-        # filter all noise flows over UDP
-        noise_udp_bins = uper[~uper["cname"].apply(lambda cname: matches(cname, regs))]
+        # Select all rows associated to a linear stream over TCP
+        media_udp_bins = uper[uper["cname"].apply(lambda cname: matches(cname, regexs))]
+        # Select all rows associated to a non linear stream over TCP
+        noise_udp_bins = uper[~uper["cname"].apply(lambda cname: matches(cname, regexs))]
 
         for num, (ts, te) in enumerate(periods):
 
-            # filter all TCP bins from media subset
-            # and count how many bins are in there
+            # Filter all TCP bins that matches the current
+            # streaming period
             tcp_bins = media_tcp_bins[
                 (media_tcp_bins["ts"] <= float(te)) & 
                 (media_tcp_bins["te"] >= float(ts))]
             tot_tcp = len(tcp_bins["cname"])
 
-            # filter all UDP bins from media subset
-            # and count how many bins are in there
+            # Filter all UDP bins that matches the current
+            # streaming period
             udp_bins = media_udp_bins[
                 (media_udp_bins["ts"] <= float(te)) & 
                 (media_udp_bins["te"] >= float(ts))]
             tot_udp = len(udp_bins["cname"])
 
-            # init percentage
+            # Init statistics
             tcp_per = 0
             udp_per = 0
 
@@ -385,77 +385,171 @@ if __name__ == "__main__":
                 tcp_per = (tot_tcp / tot) * 100
                 udp_per = (tot_udp / tot) * 100
 
-            # a streaming over tcp
+            # Process a linear streaming over TCP
             if tcp_per >= 90:
                 metrics = process_period(data=tcp_bins, 
-                                         meta=pandas.read_csv(os.path.join(folder, LOG_HAR_COMPLETE), sep="\s+"), 
+                                         meta=pandas.read_csv(os.path.join(folder, "tests", test, LOG_HAR_COMPLETE), sep="\s+"), 
                                          ts=ts, 
                                          te=te, 
                                          delta=float(step), proto=Protocol.TCP)
                 metrics.to_csv(os.path.join(outputs[0], f"log_tcp_media_{medias_over_tcp}"), index=False, sep=" ")
                 medias_over_tcp += 1
-                #print(f"  - period processed over TCP"
+                print(f"[MSG]: linear streaming in test {test} in folder {folder} has been detected as TCP-based")
 
-            # a streaming over udp
-            elif udp_per >= 90:
+            # Process a linear streaming over UDP
+            if udp_per >= 90:
                 metrics = process_period(data=udp_bins, 
-                                         meta=pandas.read_csv(os.path.join(folder, LOG_HAR_COMPLETE), sep="\s+"), 
+                                         meta=pandas.read_csv(os.path.join(folder, "tests", test, LOG_HAR_COMPLETE), sep="\s+"), 
                                          ts=ts, 
                                          te=te, 
                                          delta=float(step), proto=Protocol.UDP)
                 metrics.to_csv(os.path.join(outputs[1], f"log_udp_media_{medias_over_udp}"), index=False, sep=" ")
                 medias_over_udp += 1
-                #print(f"  - period processed over UDP")
+                print(f"[MSG]: linear streaming in test {test} in folder {folder} has been detected as UDP-based")
 
-            # a streaming over mix
-            # else:
-            #     metrics = process_period(data=pandas.concat([tcp_bins, udp_bins], ignore_index=True), 
-            #                              meta=pandas.read_csv(os.path.join(folder, LOG_HAR_COMPLETE), sep="\s+"), 
-            #                              ts=ts, 
-            #                              te=te, 
-            #                              delta=float(step), proto=Protocol.UDP)
-            #     metrics.to_csv(os.path.join(outputs[2], f"log_mix_media_{medias_over_mix}"), index=False, sep=" ")
-            #     medias_over_mix += 1
-            #     print(f"  - period processed over MIX")
 
-            # # filter all TCP bins from media subset
-            # # and count how many bins are in there
-            # tcp_bins = noise_tcp_bins[
-            #     (noise_tcp_bins["ts"] <= float(te)) & 
-            #     (noise_tcp_bins["te"] >= float(ts))]
+    # Load all tests in the input folder
 
-            # # filter all UDP bins from media subset
-            # # and count how many bins are in there
-            # udp_bins = noise_udp_bins[
-            #     (noise_udp_bins["ts"] <= float(te)) & 
-            #     (noise_udp_bins["te"] >= float(ts))]
+    # # load all compiled test from Tstat
+    # folders = load_tests(folder=folder)
+
+    # # init counters
+    # medias_over_tcp = 0
+    # medias_over_udp = 0
+    # medias_over_mix = 0
+    # noises_over_tcp = 0
+    # noises_over_udp = 0
+    # noises_over_mix = 0
+
+    # for folder in folders:
+    #     print(f"Processing folder: {folder}")
+    #     print(f"  - step: {step} ms, {float(step) / 1000} s")
+
+    #     # load regular expressions
+    #     path = os.path.join(METADATA, "regexs", "linear.txt")
+    #     regs = load_regex_patterns(path=path)
+
+    #     # load periods
+    #     path = os.path.join(folder, LOG_BOT_COMPLETE)
+    #     periods = __extract_streaming_periods(path=path)
+
+    #     # generate tcp periodic frame
+    #     path = os.path.join(folder, LOG_TCP_PERIODIC)
+    #     tper = pandas.read_csv(path, sep="\s+")
+    #     tper["proto"] = Protocol.TCP
+
+    #     # generate udp periodic frame
+    #     path = os.path.join(folder, LOG_UDP_PERIODIC)
+    #     uper = pandas.read_csv(path, sep="\s+")
+    #     uper["proto"] = Protocol.UDP
+
+    #     # filter all media flows over TCP
+    #     media_tcp_bins = tper[tper["cname"].apply(lambda cname: matches(cname, regs))]
+    #     # filter all noise flows over TCP
+    #     noise_tcp_bins = tper[~tper["cname"].apply(lambda cname: matches(cname, regs))]
+
+    #     # filter all noise flows over UDP
+    #     media_udp_bins = uper[uper["cname"].apply(lambda cname: matches(cname, regs))]
+    #     # filter all noise flows over UDP
+    #     noise_udp_bins = uper[~uper["cname"].apply(lambda cname: matches(cname, regs))]
+
+    #     for num, (ts, te) in enumerate(periods):
+
+    #         # filter all TCP bins from media subset
+    #         # and count how many bins are in there
+    #         tcp_bins = media_tcp_bins[
+    #             (media_tcp_bins["ts"] <= float(te)) & 
+    #             (media_tcp_bins["te"] >= float(ts))]
+    #         tot_tcp = len(tcp_bins["cname"])
+
+    #         # filter all UDP bins from media subset
+    #         # and count how many bins are in there
+    #         udp_bins = media_udp_bins[
+    #             (media_udp_bins["ts"] <= float(te)) & 
+    #             (media_udp_bins["te"] >= float(ts))]
+    #         tot_udp = len(udp_bins["cname"])
+
+    #         # init percentage
+    #         tcp_per = 0
+    #         udp_per = 0
+
+    #         tot = tot_tcp + tot_udp
+
+    #         if tot > 0:
+    #             tcp_per = (tot_tcp / tot) * 100
+    #             udp_per = (tot_udp / tot) * 100
+
+    #         # a streaming over tcp
+    #         if tcp_per >= 90:
+    #             metrics = process_period(data=tcp_bins, 
+    #                                      meta=pandas.read_csv(os.path.join(folder, LOG_HAR_COMPLETE), sep="\s+"), 
+    #                                      ts=ts, 
+    #                                      te=te, 
+    #                                      delta=float(step), proto=Protocol.TCP)
+    #             metrics.to_csv(os.path.join(outputs[0], f"log_tcp_media_{medias_over_tcp}"), index=False, sep=" ")
+    #             medias_over_tcp += 1
+    #             #print(f"  - period processed over TCP"
+
+    #         # a streaming over udp
+    #         # elif udp_per >= 90:
+    #         #     metrics = process_period(data=udp_bins, 
+    #         #                              meta=pandas.read_csv(os.path.join(folder, LOG_HAR_COMPLETE), sep="\s+"), 
+    #         #                              ts=ts, 
+    #         #                              te=te, 
+    #         #                              delta=float(step), proto=Protocol.UDP)
+    #         #     metrics.to_csv(os.path.join(outputs[1], f"log_udp_media_{medias_over_udp}"), index=False, sep=" ")
+    #         #     medias_over_udp += 1
+    #             #print(f"  - period processed over UDP")
+
+    #         # a streaming over mix
+    #         # else:
+    #         #     metrics = process_period(data=pandas.concat([tcp_bins, udp_bins], ignore_index=True), 
+    #         #                              meta=pandas.read_csv(os.path.join(folder, LOG_HAR_COMPLETE), sep="\s+"), 
+    #         #                              ts=ts, 
+    #         #                              te=te, 
+    #         #                              delta=float(step), proto=Protocol.UDP)
+    #         #     metrics.to_csv(os.path.join(outputs[2], f"log_mix_media_{medias_over_mix}"), index=False, sep=" ")
+    #         #     medias_over_mix += 1
+    #         #     print(f"  - period processed over MIX")
+
+    #         # # filter all TCP bins from media subset
+    #         # # and count how many bins are in there
+    #         # tcp_bins = noise_tcp_bins[
+    #         #     (noise_tcp_bins["ts"] <= float(te)) & 
+    #         #     (noise_tcp_bins["te"] >= float(ts))]
+
+    #         # # filter all UDP bins from media subset
+    #         # # and count how many bins are in there
+    #         # udp_bins = noise_udp_bins[
+    #         #     (noise_udp_bins["ts"] <= float(te)) & 
+    #         #     (noise_udp_bins["te"] >= float(ts))]
             
-            # if tcp_per >= 90:
-            #     metrics = process_period(data=tcp_bins, 
-            #                              meta=pandas.read_csv(os.path.join(folder, LOG_HAR_COMPLETE), sep="\s+"), 
-            #                              ts=ts, 
-            #                              te=te, 
-            #                              delta=float(step), proto=Protocol.TCP)
-            #     metrics.to_csv(os.path.join(outputs[3], f"log_tcp_noise_{noises_over_tcp}"), index=False, sep=" ")
-            #     noises_over_tcp += 1
-            # elif udp_per >= 90:
-            #     metrics = process_period(data=udp_bins, 
-            #                              meta=pandas.read_csv(os.path.join(folder, LOG_HAR_COMPLETE), sep="\s+"), 
-            #                              ts=ts, 
-            #                              te=te, 
-            #                              delta=float(step), proto=Protocol.UDP)
-            #     metrics.to_csv(os.path.join(outputs[4], f"log_udp_noise_{noises_over_udp}"), index=False, sep=" ")
-            #     noises_over_udp += 1
-            # else:
-            #     metrics = process_period(data=pandas.concat([tcp_bins, udp_bins], ignore_index=True), 
-            #                              meta=pandas.read_csv(os.path.join(folder, LOG_HAR_COMPLETE), sep="\s+"), 
-            #                              ts=ts, 
-            #                              te=te, 
-            #                              delta=float(step), proto=Protocol.UDP)
-            #     metrics.to_csv(os.path.join(outputs[2], f"log_mix_media_{medias_over_mix}"), index=False, sep=" ")
-            #     medias_over_mix += 1   
-        #print(f"  - all periods have been processed")
-        #print()
+    #         # if tcp_per >= 90:
+    #         #     metrics = process_period(data=tcp_bins, 
+    #         #                              meta=pandas.read_csv(os.path.join(folder, LOG_HAR_COMPLETE), sep="\s+"), 
+    #         #                              ts=ts, 
+    #         #                              te=te, 
+    #         #                              delta=float(step), proto=Protocol.TCP)
+    #         #     metrics.to_csv(os.path.join(outputs[3], f"log_tcp_noise_{noises_over_tcp}"), index=False, sep=" ")
+    #         #     noises_over_tcp += 1
+    #         # elif udp_per >= 90:
+    #         #     metrics = process_period(data=udp_bins, 
+    #         #                              meta=pandas.read_csv(os.path.join(folder, LOG_HAR_COMPLETE), sep="\s+"), 
+    #         #                              ts=ts, 
+    #         #                              te=te, 
+    #         #                              delta=float(step), proto=Protocol.UDP)
+    #         #     metrics.to_csv(os.path.join(outputs[4], f"log_udp_noise_{noises_over_udp}"), index=False, sep=" ")
+    #         #     noises_over_udp += 1
+    #         # else:
+    #         #     metrics = process_period(data=pandas.concat([tcp_bins, udp_bins], ignore_index=True), 
+    #         #                              meta=pandas.read_csv(os.path.join(folder, LOG_HAR_COMPLETE), sep="\s+"), 
+    #         #                              ts=ts, 
+    #         #                              te=te, 
+    #         #                              delta=float(step), proto=Protocol.UDP)
+    #         #     metrics.to_csv(os.path.join(outputs[2], f"log_mix_media_{medias_over_mix}"), index=False, sep=" ")
+    #         #     medias_over_mix += 1   
+    #     #print(f"  - all periods have been processed")
+    #     #print()
 
 
 

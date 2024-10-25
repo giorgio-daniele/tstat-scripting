@@ -1,0 +1,60 @@
+####### DAZN linear servers
+
+# Akamai
+dce-ak-livedazn.akamaized.net
+dcf-ak-livedazn.akamaized.net
+
+# Amazon Cloud Front
+dcf-ac-live.cdn.indazn.com
+913712-ac-live.cdn.indazn.com
+dcp1-ac-live.cdn.indazn.com
+1402144-ac-live.cdn.indazn.com
+dcl-ac-live.cdn.indazn.com
+befake1402144-ac-live.cdn.indazn.com
+twfake1402144-ac-live.cdn.indazn.com
+dc1-ac-live2.cdn.indazn.com
+dcy-ac-live.cdn.indazn.com
+dcj-ac-live.cdn.indazn.com
+dc1-ac-live.cdn.indazn.com
+1535932-ac-live.cdn.indazn.com
+1200044-ac-live.cdn.indazn.com
+mss-ac-live.cdn.indazn.com
+1347058-ac-live.cdn.indazn.com
+dck-ac-live.cdn.indazn.com
+dc2-ac-live2.cdn.indazn.com
+ptfake1402144-ac-live.cdn.indazn.com
+dca-ac-livefree.cdn.indazn.com
+dch-ac-live.cdn.indazn.com
+dcb-ac-livefree.cdn.indazn.com
+dcg-ac-live.cdn.indazn.com
+dcb-acww-live.cdn.indazn.com
+dca-acww-live.cdn.indazn.com
+dcs-ac-live.cdn.indazn.com
+live.dca.cdn.indazn.com
+912432-ac-live.cdn.indazn.com
+dct-ac-live.cdn.indazn.com
+dca-ac-live.cdn.indazn.com
+dcb-ac-live.cdn.indazn.com
+dcp2-ac-live.cdn.indazn.com
+dc2-ac-live.cdn.indazn.com
+1200023-ac-live.cdn.indazn.com
+frfake1402144-ac-live.cdn.indazn.com
+
+# Google Cloud
+dcb-gc-live.cdngc.dazn.com
+dca-gc-live.cdngc.dazn.com
+dca-gc-livefree.cdngc.dazn.com
+dcb-gc-livefree.cdngc.dazn.com
+dca-gc-live-dazn-cdn.dazn.com
+dcb-gc-live-dazn-cdn.dazn.com
+
+# Fastly
+dcf-fs-live-dazn-cdn.dazn.com
+dce-fs-live-dazn-cdn.dazn.com
+
+# Daznedge
+dce-de-livedazn.daznedge.net
+dcf-de-livedazn.daznedge.net
+dcj-de-livedazn.daznedge.net
+dcaos-de-livedazn.daznedge.net
+
