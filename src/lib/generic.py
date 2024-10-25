@@ -22,6 +22,8 @@ LOG_UDP_PERIODIC = "log_udp_periodic"
 LOG_HAR_COMPLETE = "log_har_complete"
 LOG_BOT_COMPLETE = "log_bot_complete"
 LOG_NET_COMPLETE = "log_net_complete"
+LOG_VIDEO_COMPLETE = "log_video_complete"
+LOG_AUDIO_COMPLETE = "log_audio_complete"
 
 CAP = ".pcap"
 BOT = ".csv"
@@ -80,14 +82,18 @@ def __fetch_files(folder: str, prefix: str, suffix: str) -> list[str]:
     return sorted(result)
 
 
-def __fetch_tests_files(folder: str) -> list[str]:
-    data  = []
-    names = {
-        'bot': re.compile(r'log_bot_complete$'), 
-        'tcp': re.compile(r'log_tcp_complete$'), 
-        'udp': re.compile(r'log_udp_complete$')}
 
-    for root, _, files in os.walk(folder):
+def __fetch_tests_files(path: str) -> list[tuple[str, str, str]]:
+    data = []
+    # Regular expressions for matching file names
+    names = {
+        'tcp': re.compile(r'log_tcp_complete$'), 
+        'udp': re.compile(r'log_udp_complete$'),
+        'bot': re.compile(r'log_bot_complete')
+    }
+
+    for root, _, files in os.walk(path):
+
         if os.path.basename(root).startswith("test"):
             logs = {}
 
@@ -96,17 +102,20 @@ def __fetch_tests_files(folder: str) -> list[str]:
                 for key, pattern in names.items():
                     if pattern.search(f):
                         logs[key] = full_path
-            
+
             if len(logs) == 3:
                 data.append((logs['bot'], logs['tcp'], logs['udp'], os.path.basename(root)))
 
+    # sort by the numeric part of the folder name (e.g., test123 -> 123)
     sorted_data = sorted(data, key=lambda x: int(re.search(r'\d+', x[3]).group()))
+
+    # return the relevant log file paths (bot, tcp, udp) without folder names
     return [(log[0], log[1], log[2]) for log in sorted_data]
 
 
-def __extract_streaming_periods(file: str):
+def __extract_streaming_periods(path: str):
 
-    frame = pandas.read_csv(file, sep=r"\s+")
+    frame = pandas.read_csv(path, sep=r"\s+")
     frame = frame[~frame["event"].str.contains("sniffer|browser|origin|net|app", case=False, na=False)]
     frame = frame.reset_index(drop=True)
 

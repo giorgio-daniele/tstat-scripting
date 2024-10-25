@@ -1,4 +1,4 @@
-DAZN_MANIFEST_DAZNEDGE = {
+DAZN_MANIFEST_VERSION_A = {
     "video": {
         "video_288kbps": {
             "bitrate": 288,
@@ -61,7 +61,7 @@ DAZN_MANIFEST_DAZNEDGE = {
     },
 }
 
-DAZN_MANIFEST_AWS_AKAMAI = {
+DAZN_MANIFEST_VERSION_B = {
     "video": {
         "stream_video_1": {
             "bitrate": 8000,
@@ -153,4 +153,4 @@ TELEMETRY_SERVICES = {
     "twitter"
 }
 
-ROOT = "meta/temp/dazn"
+METADATA = "meta/dazn"
